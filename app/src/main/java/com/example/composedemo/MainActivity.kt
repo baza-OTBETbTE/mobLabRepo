@@ -43,7 +43,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun GreetingPreview() {
     ComposeDemoTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting("Android", modifier = Modifier.padding(innerPadding))
+            Greeting("Compose", modifier = Modifier.padding(innerPadding))
         }
     }
 }
