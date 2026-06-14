@@ -112,7 +112,10 @@ fun DiscountRadioGroup(selectedDiscount: Int) {
 }
 
 @Composable
-fun TipCalculatorScreen(viewModel: CalculatorViewModel = viewModel(), modifier: Modifier = Modifier) {
+fun TipCalculatorScreen(
+    viewModel: CalculatorViewModel = viewModel(),
+    modifier: Modifier = Modifier
+) {
 
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -173,6 +176,19 @@ fun TipCalculatorScreen(viewModel: CalculatorViewModel = viewModel(), modifier: 
         ) {
             DiscountRadioGroup(
                 selectedDiscount = state.discountPercent
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 30.dp)
+        ) {
+            Text(
+                text = "Итоговая сумма к оплате: ",
+            )
+            Text(
+                text = viewModel.totalToPay,
+                style = MaterialTheme.typography.headlineMedium
             )
         }
     }
