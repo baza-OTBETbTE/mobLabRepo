@@ -136,16 +136,21 @@ fun GeoQuizScreen(modifier: Modifier, viewModel: GeoQuizViewModel = viewModel())
         }
 
         if (state.questionAnswered && state.currentIndex == state.questions.lastIndex) {
-            Button(
-                onClick = { viewModel.onNextQuestion() },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = Color(0xFFFFFFFF),
-                    containerColor = Color(0xFF3D35B1)
-                )
+            Row(
+                modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                Text("Показать результат")
+                Button(
+                    onClick = { viewModel.onNextQuestion() },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = Color(0xFFFFFFFF),
+                        containerColor = Color(0xFF3D35B1)
+                    )
+                ) {
+                    Text("Показать результат")
+                }
             }
         }
 
