@@ -31,6 +31,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tipcalculator.ui.theme.TipCalculatorTheme
 
 
@@ -60,16 +63,19 @@ fun TipCalculatorPreview() {
 fun TipSlider(
     sliderPosition: Float,
     onPositionChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    state: CalculatorState,
+    viewModel: CalculatorViewModel
 ) {
+
     Row(modifier) {
         Text(text = "Чаевые:")
     }
     Row(modifier) {
         Slider(
             valueRange = 0f..25f,
-            value = sliderPosition,
-            onValueChange = { onPositionChange(it) },
+            value = state.tipPercent.toFloat(),
+            onValueChange = { viewModel.onTipPercentChanged(it.toInt()) },
             colors = SliderDefaults.colors(
                 thumbColor = Color(0xFF3949AB),
                 activeTrackColor = Color(0xFF3F51B5),
@@ -86,7 +92,30 @@ fun TipSlider(
 }
 
 @Composable
-fun TipCalculatorScreen(modifier: Modifier = Modifier) {
+fun DiscountRadioGroup(selectedDiscount: Int) {
+    val discountOptions = listOf(3, 5, 7, 10)
+    Text(
+        text = "Скидка:",
+        style = MaterialTheme.typography.headlineSmall
+    )
+    discountOptions.forEach { discount ->
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            RadioButton(
+                selected = selectedDiscount == discount,
+                onClick = null
+            )
+            Text("$discount%", fontSize = 16.sp, modifier = Modifier.padding(4.dp))
+        }
+    }
+}
+
+@Composable
+fun TipCalculatorScreen(viewModel: CalculatorViewModel = viewModel(), modifier: Modifier = Modifier) {
+
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
     var sliderPosition by remember { mutableFloatStateOf(20f) }
     val handlePositionChange = { position: Float ->
         sliderPosition = position
@@ -102,8 +131,8 @@ fun TipCalculatorScreen(modifier: Modifier = Modifier) {
                 text = "Сумма заказа:",
             )
             TextField(
-                value = "3000",
-                onValueChange = {},
+                value = state.orderAmount,
+                onValueChange = viewModel::onOrderAmountChanged,
                 singleLine = true,
                 modifier = Modifier
                     .width(200.dp)
@@ -120,8 +149,8 @@ fun TipCalculatorScreen(modifier: Modifier = Modifier) {
                 text = "Количество блюд:"
             )
             TextField(
-                value = "5",
-                onValueChange = {},
+                value = state.dishesCount,
+                onValueChange = viewModel::onDishesCountChanged,
                 singleLine = true,
                 modifier = Modifier
                     .width(75.dp)
@@ -132,7 +161,9 @@ fun TipCalculatorScreen(modifier: Modifier = Modifier) {
         TipSlider(
             sliderPosition = sliderPosition,
             onPositionChange = handlePositionChange,
-            modifier = Modifier.padding(horizontal = 10.dp)
+            modifier = Modifier.padding(horizontal = 10.dp),
+            state = state,
+            viewModel = viewModel
         )
 
         Row(
@@ -140,46 +171,9 @@ fun TipCalculatorScreen(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp)
         ) {
-            Text(
-                text = "Скидка:",
-                style = MaterialTheme.typography.headlineSmall
+            DiscountRadioGroup(
+                selectedDiscount = state.discountPercent
             )
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                RadioButton(
-                    selected = false,
-                    onClick = {}
-                )
-                Text("3%", fontSize = 16.sp, modifier = Modifier.padding(4.dp))
-            }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                RadioButton(
-                    selected = false,
-                    onClick = {}
-                )
-                Text("5%", fontSize = 16.sp, modifier = Modifier.padding(4.dp))
-            }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                RadioButton(
-                    selected = false,
-                    onClick = {}
-                )
-                Text("7%", fontSize = 16.sp, modifier = Modifier.padding(4.dp))
-            }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                RadioButton(
-                    selected = false,
-                    onClick = {}
-                )
-                Text("10%", fontSize = 16.sp, modifier = Modifier.padding(4.dp))
-            }
         }
     }
 }
