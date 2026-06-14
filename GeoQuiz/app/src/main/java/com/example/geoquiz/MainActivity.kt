@@ -1,5 +1,6 @@
 package com.example.geoquiz
 
+import android.R.attr.onClick
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,18 +13,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,9 +69,6 @@ fun GeoQuizPreview() {
 fun GeoQuizScreen(modifier: Modifier, viewModel: GeoQuizViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-
-
-
     Column() {
         TopAppBar(
             title = { Text("GeoQuiz", fontSize = 22.sp) },
@@ -79,48 +80,87 @@ fun GeoQuizScreen(modifier: Modifier, viewModel: GeoQuizViewModel = viewModel())
         )
 
         Row(
-            modifier.padding(vertical = 15.dp).fillMaxWidth(),
+            modifier
+                .padding(vertical = 15.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Canberra is the capital of Australia",
+                text = state.questions[state.currentIndex].text,
+                textAlign = TextAlign.Center,
                 color = Color(0xFF4F4F4F)
             )
         }
 
-        Row(
-            modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Button(onClick = {},
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = Color(0xFFFFFFFF),
-                    containerColor = Color(0xFF3D35B1))
-            ){ Text("TRUE", fontSize = 13.sp) }
-            Button(onClick = {},
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = Color(0xFFFFFFFF),
-                    containerColor = Color(0xFF3D35B1))
-            ){ Text("FALSE", fontSize = 13.sp) }
+        if (!state.questionAnswered) {
+            Row(
+                modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Button(
+                    onClick = { viewModel.onAnswer(true) },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = Color(0xFFFFFFFF),
+                        containerColor = Color(0xFF3D35B1)
+                    )
+                ) { Text("TRUE", fontSize = 13.sp) }
+                Button(
+                    onClick = { viewModel.onAnswer(false) },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = Color(0xFFFFFFFF),
+                        containerColor = Color(0xFF3D35B1)
+                    )
+                ) { Text("FALSE", fontSize = 13.sp) }
+            }
         }
 
-        Row(
-            modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Button(onClick = {},
+        if (state.questionAnswered && state.currentIndex < state.questions.lastIndex) {
+            Row(
+                modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = { viewModel.onNextQuestion() },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = Color(0xFFFFFFFF),
+                        containerColor = Color(0xFF3D35B1)
+                    )
+                ) { Text("NEXT >", fontSize = 13.sp) }
+            }
+        }
+
+        if (state.questionAnswered && state.currentIndex == state.questions.lastIndex) {
+            Button(
+                onClick = { viewModel.onNextQuestion() },
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.padding(10.dp),
                 colors = ButtonDefaults.buttonColors(
                     contentColor = Color(0xFFFFFFFF),
-                    containerColor = Color(0xFF3D35B1))
-            ){ Text("NEXT >", fontSize = 13.sp) }
+                    containerColor = Color(0xFF3D35B1)
+                )
+            ) {
+                Text("Показать результат")
+            }
         }
+
+        if (state.showResultDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissResultDialog() },
+                title = { Text("Результат") },
+                text = { Text(viewModel.resultText) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissResultDialog() }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+
     }
-
-
 }
