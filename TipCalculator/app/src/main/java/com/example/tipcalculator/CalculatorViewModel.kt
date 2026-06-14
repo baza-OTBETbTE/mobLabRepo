@@ -33,12 +33,12 @@ class CalculatorViewModel : ViewModel() {
     private fun calculateDiscount(countStr: String): Int {
         val count = countStr.toIntOrNull()
         return when {
-            count == null -> 3
+            count == null -> 0
             count in 1..2 -> 3
             count in 3..5 -> 5
             count in 6..10 -> 7
             count > 10 -> 10
-            else -> 3
+            else -> 0
         }
     }
 
