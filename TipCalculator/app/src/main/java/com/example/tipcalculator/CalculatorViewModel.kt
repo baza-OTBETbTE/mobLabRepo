@@ -30,5 +30,36 @@ class CalculatorViewModel : ViewModel() {
         _state.update { it.copy(tipPercent = percent) }
     }
 
+    private fun calculateDiscount(countStr: String): Int {
+        val count = countStr.toIntOrNull()
+        return when {
+            count == null -> 3
+            count in 1..2 -> 3
+            count in 3..5 -> 5
+            count in 6..10 -> 7
+            count > 10 -> 10
+            else -> 3
+        }
+    }
+
+    val totalToPay: String
+        get() {
+            val amount = _state.value.orderAmount.toDoubleOrNull()
+            val dishes = _state.value.dishesCount.toIntOrNull()
+            if (amount == null || dishes == null || amount <= 0 || dishes <= 0)
+                return "—"
+
+            val tip = _state.value.tipPercent
+            val discount = _state.value.discountPercent
+
+            // Сумма скидки
+            val discountAmount = amount * discount / 100.0
+            val discounted = amount - discountAmount
+            val tipAmount = discounted * tip / 100.0
+            val total = discounted + tipAmount
+
+            val formatter = DecimalFormat("#.##")
+            return formatter.format(total)
+        }
 
 }
