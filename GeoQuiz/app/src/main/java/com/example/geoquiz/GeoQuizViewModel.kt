@@ -1,5 +1,10 @@
 package com.example.geoquiz
 
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+
 
 data class Question(
     val text: String,
@@ -20,3 +25,49 @@ data class QuizState(
     val questionAnswered: Boolean = false,
     val showResultDialog: Boolean = false
 )
+
+class GeoQuizViewModel : ViewModel() {
+    private val _state = MutableStateFlow(QuizState())
+    val state: StateFlow<QuizState> = _state
+
+    fun onAnswer(userAnswer: Boolean) {
+        val current = _state.value
+        val updatedAnswers = current.userAnswers.toMutableList()
+        updatedAnswers[current.currentIndex] = userAnswer
+        _state.update {
+            it.copy(
+                userAnswers = updatedAnswers,
+                questionAnswered = true
+            )
+        }
+    }
+
+    fun onNextQuestion() {
+        _state.update { state ->
+            val nextIndex = state.currentIndex + 1
+            if (nextIndex < state.questions.size) {
+                state.copy(
+                    currentIndex = nextIndex,
+                    questionAnswered = false
+                )
+            } else {
+                state.copy(showResultDialog = true)
+            }
+        }
+    }
+
+    fun dismissResultDialog() {
+        _state.update { it.copy(showResultDialog = false) }
+    }
+
+    val correctCount: Int
+        get() {
+            val state = _state.value
+            return state.questions.indices.count { index ->
+                state.userAnswers[index] == state.questions[index].correctAnswer
+            }
+        }
+
+    val resultText: String
+        get() = "Правильных ответов: $correctCount из ${_state.value.questions.size}"
+}
