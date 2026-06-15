@@ -1,5 +1,3 @@
-package com.example.glanceexample.glance
-
 import android.content.Context
 import androidx.glance.text.Text
 import androidx.compose.runtime.Composable
@@ -14,12 +12,13 @@ import androidx.glance.background
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
+import com.example.glanceexample.glance.PriceDataRepo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
+import java.time.Duration
 
 class StockAppWidget : GlanceAppWidget() {
 
@@ -29,7 +28,7 @@ class StockAppWidget : GlanceAppWidget() {
 
         if (job == null) {
             job = startUpdateJob(
-                20.seconds.inWholeMilliseconds,
+                Duration.ofSeconds(20).toMillis(),
                 context
             )
         }
