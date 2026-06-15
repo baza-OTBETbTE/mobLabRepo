@@ -12,6 +12,7 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.cornerRadius
@@ -37,6 +38,10 @@ import java.util.Locale
 class StockAppWidget : GlanceAppWidget() {
 
     private var job: Job? = null
+
+    private fun refreshPrice() {
+        PriceDataRepo.update()
+    }
 
     companion object {
         private val smallMode = DpSize(100.dp, 80.dp)
@@ -66,13 +71,11 @@ class StockAppWidget : GlanceAppWidget() {
 
     @Composable
     private fun Medium(stateCount: Float) {
-        Column(
-            horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
+        Column(horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
             modifier = GlanceModifier
+                .clickable { refreshPrice() }
                 .fillMaxSize()
-                .cornerRadius(15.dp)
-                .background(GlanceTheme.colors.background)
-                .padding(8.dp)
+
         ) {
             StockDisplay(stateCount)
             Image(
@@ -136,11 +139,9 @@ class StockAppWidget : GlanceAppWidget() {
 
     @Composable
     private fun Small(stateCount: Float) {
-        Column(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(GlanceTheme.colors.background)
-                .padding(8.dp)
+        Column(modifier = GlanceModifier
+            .clickable { refreshPrice() }
+            .fillMaxSize(),
         ) {
             StockDisplay(stateCount)
         }
