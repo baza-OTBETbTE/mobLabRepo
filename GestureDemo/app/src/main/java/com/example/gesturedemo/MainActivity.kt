@@ -71,16 +71,19 @@ fun MainScreen(modifier: Modifier = Modifier) {
 @Composable
 fun MultiTouchDemo(modifier: Modifier = Modifier) {
     var scale by remember { mutableStateOf(1f) }
+    var angle by remember { mutableStateOf(0f) }
     val state = rememberTransformableState {
             scaleChange, offsetChange, rotationChange ->
         scale *= scaleChange
+        angle += rotationChange
     }
-    Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
         Box(
-            Modifier
+            modifier
                 .graphicsLayer(
                     scaleX = scale,
-                    scaleY = scale
+                    scaleY = scale,
+                    rotationZ = angle
                 )
                 .transformable(state = state)
                 .background(Color.Blue)
@@ -88,5 +91,6 @@ fun MultiTouchDemo(modifier: Modifier = Modifier) {
         )
     }
 }
+
 
 
