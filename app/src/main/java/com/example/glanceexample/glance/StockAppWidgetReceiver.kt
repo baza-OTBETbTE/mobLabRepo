@@ -1,6 +1,5 @@
 package com.example.glanceexample.glance
 
-import StockAppWidget
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import kotlinx.coroutines.CoroutineScope
