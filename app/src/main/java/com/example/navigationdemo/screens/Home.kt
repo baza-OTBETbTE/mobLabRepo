@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavKey
+import com.example.navigationdemo.WelcomeScreen
+
 @Composable
 fun Home(onNavigation: (NavKey) -> Unit) {
     var userName by remember { mutableStateOf("") }
@@ -40,6 +42,7 @@ fun Home(onNavigation: (NavKey) -> Unit) {
             )
             Spacer(modifier = Modifier.size(30.dp))
             Button(onClick = {
+                onNavigation(WelcomeScreen(userName))
             }) {
                 Text(text = "Register")
             }
