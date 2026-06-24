@@ -6,15 +6,13 @@ plugins {
 android {
     namespace = "com.example.tipcalculator"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.example.tipcalculator"
-        minSdk = 27
-        targetSdk = 36
+        minSdk = 37
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
