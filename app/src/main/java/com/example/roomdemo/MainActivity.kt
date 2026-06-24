@@ -155,24 +155,26 @@ fun MainScreen(
                 Text("Clear")
             }
         }
+
+        LazyColumn(
+            Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            val list = if (searching) searchResults else allProducts
+            item {
+                TitleRow(head1 = "ID", head2 = "Product", head3 = "Quantity")
+            }
+            items(list) { product ->
+                ProductRow(
+                    id = product.id, name = product.productName,
+                    quantity = product.quantity
+                )
+            }
+        }
     }
 
-    LazyColumn(
-        Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-    ) {
-        val list = if (searching) searchResults else allProducts
-        item {
-            TitleRow(head1 = "ID", head2 = "Product", head3 = "Quantity")
-        }
-        items(list) { product ->
-            ProductRow(
-                id = product.id, name = product.productName,
-                quantity = product.quantity
-            )
-        }
-    }
+
 }
 
 @Composable
