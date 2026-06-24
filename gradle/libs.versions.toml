@@ -10,8 +10,8 @@ kotlin = "2.4.0"
 composeBom = "2026.06.00"
 navigation3Runtime = "1.2.0-alpha04"
 navigation3Ui = "1.2.0-alpha04"
-kotlinSerialization = "2.4.0"
-kotlinxSerializationCore = "1.11.0"
+kotlinSerialization = "2.2.0"
+kotlinxSerializationCore = "1.9.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

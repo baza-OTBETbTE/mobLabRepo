@@ -14,9 +14,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.example.navigationdemo.screens.Home
-import com.example.navigationdemo.screens.Profile
-import com.example.navigationdemo.screens.Welcome
+import com.example.navigationdemo.screens.*
 import com.example.navigationdemo.ui.theme.NavigationDemoTheme
 
 class MainActivity : ComponentActivity() {
