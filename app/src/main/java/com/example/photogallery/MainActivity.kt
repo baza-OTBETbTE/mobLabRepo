@@ -4,11 +4,19 @@ import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,12 +28,15 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -123,7 +135,7 @@ class PhotoGalleryViewModel (application: Application) : AndroidViewModel(applic
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
     val photos by viewModel.photos.collectAsState()
@@ -134,6 +146,8 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
     var searchQuery by remember { mutableStateOf("") }
     var expandedMenu by remember { mutableStateOf(false) }
     var showFavorites by remember { mutableStateOf(false) }
+
+    var enlargedPhotoData by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     Scaffold(
         topBar = {
@@ -198,9 +212,10 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
                             modifier = Modifier
                                 .padding(4.dp)
                                 .aspectRatio(1f)
-                                .clickable {
-                                    viewModel.toggleFavorite(favPhoto.id, favPhoto.url, true)
-                                }
+                                .combinedClickable(
+                                    onClick = { viewModel.toggleFavorite(favPhoto.id, favPhoto.url, true) },
+                                    onLongClick = { enlargedPhotoData = Pair(favPhoto.id, favPhoto.url) }
+                                )
                         ) {
                             AsyncImage(
                                 model = favPhoto.url,
@@ -229,9 +244,10 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
                             modifier = Modifier
                                 .padding(4.dp)
                                 .aspectRatio(1f)
-                                .clickable {
-                                    viewModel.toggleFavorite(photo.id, photo.urls.small, isLiked)
-                                }
+                                .combinedClickable(
+                                    onClick = { viewModel.toggleFavorite(photo.id, photo.urls.small, isLiked) },
+                                    onLongClick = { enlargedPhotoData = Pair(photo.id, photo.urls.small) }
+                                )
                         ) {
                             AsyncImage(
                                 model = photo.urls.small,
@@ -239,7 +255,6 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
-
                             Icon(
                                 imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = "Like Status",
@@ -251,6 +266,54 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
                                     .background(Color.Black.copy(alpha = 0.3f), shape = MaterialTheme.shapes.small)
                                     .padding(4.dp)
                             )
+                        }
+                    }
+                }
+            }
+
+            enlargedPhotoData?.let { (photoId, photoUrl) ->
+                val isLiked = favoriteIds.contains(photoId)
+
+                Dialog(onDismissRequest = { enlargedPhotoData = null }) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            AsyncImage(
+                                model = photoUrl,
+                                contentDescription = "Enlarged Photo",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(300.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Button(
+                                    onClick = {
+                                        viewModel.toggleFavorite(photoId, photoUrl, isLiked)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isLiked) Color.Red.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Text(if (isLiked) "Убрать" else "В избранное")
+                                }
+
+                                OutlinedButton(onClick = { enlargedPhotoData = null }) {
+                                    Text("Назад")
+                                }
+                            }
                         }
                     }
                 }
