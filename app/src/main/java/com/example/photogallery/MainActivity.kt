@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -43,7 +44,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -83,55 +86,76 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-class PhotoGalleryViewModel (application: Application) : AndroidViewModel(application) {
+class PhotoGalleryViewModel(application: Application) : AndroidViewModel(application) {
     private val db = Room.databaseBuilder(application, AppDatabase::class.java, "photos.db").build()
     private val dao = db.favoritePhotoDao()
 
     private val _photos = MutableStateFlow<List<UnsplashPhoto>>(emptyList())
     val photos: StateFlow<List<UnsplashPhoto>> = _photos
+
     val favoritePhotos = dao.getAll()
 
+    private var currentPage = 1
+    private var currentQuery = ""
+    private var isSearching = false
+    private var isLoading = false
+
     init {
-        loadPhotos()
+        loadRandomPhotos()
     }
 
-    private fun loadPhotos(){
+    fun loadRandomPhotos() {
+        if (isLoading) return
+        isLoading = true
         viewModelScope.launch {
             try {
-                _photos.value = api.getPhotos(API_KEY)
-            }
-            catch (e: Exception) {
-                e.printStackTrace()
-            }
+                val newPhotos = api.getPhotos(API_KEY)
+                _photos.value = _photos.value + newPhotos
+            } catch (e: Exception) { e.printStackTrace() }
+            finally { isLoading = false }
         }
     }
 
-    fun search(query: String){
+    fun search(query: String, reset: Boolean = false) {
         if (query.isBlank()) return
+
+        if (reset) {
+            currentPage = 1
+            isSearching = true
+            currentQuery = query
+            _photos.value = emptyList()
+        }
+
+        if (isLoading) return
+        isLoading = true
+
         viewModelScope.launch {
             try {
-                _photos.value = api.searchPhotos(query, API_KEY).results
-            }
-            catch (e: Exception) {
-                e.printStackTrace()
-            }
+                val response = api.searchPhotos(currentQuery, currentPage, API_KEY)
+                _photos.value = _photos.value + response.results
+                currentPage++
+            } catch (e: Exception) { e.printStackTrace() }
+            finally { isLoading = false }
+        }
+    }
+
+    fun loadMore() {
+        if (isSearching) {
+            search(currentQuery, reset = false)
+        } else {
+            loadRandomPhotos()
         }
     }
 
     fun toggleFavorite(photoId: String, url: String, isFavorite: Boolean) {
         viewModelScope.launch {
-            if (isFavorite) {
-                dao.deleteById(photoId)
-            } else {
-                dao.insert(FavoritePhoto(id = photoId, url = url))
-            }
+            if (isFavorite) dao.deleteById(photoId)
+            else dao.insert(FavoritePhoto(id = photoId, url = url))
         }
     }
 
     fun clearFavorites() {
-        viewModelScope.launch {
-            dao.deleteAll()
-        }
+        viewModelScope.launch { dao.deleteAll() }
     }
 }
 
@@ -140,14 +164,29 @@ class PhotoGalleryViewModel (application: Application) : AndroidViewModel(applic
 fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
     val photos by viewModel.photos.collectAsState()
     val favorites by viewModel.favoritePhotos.collectAsState(initial = emptyList())
-
     val favoriteIds = remember(favorites) { favorites.map { it.id }.toSet() }
 
     var searchQuery by remember { mutableStateOf("") }
     var expandedMenu by remember { mutableStateOf(false) }
     var showFavorites by remember { mutableStateOf(false) }
-
     var enlargedPhotoData by remember { mutableStateOf<Pair<String, String>?>(null) }
+
+    val gridState = rememberLazyGridState()
+
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val totalItems = gridState.layoutInfo.totalItemsCount
+            val lastVisibleItem = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            totalItems > 0 && lastVisibleItem >= totalItems - 6
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && !showFavorites) {
+            viewModel.loadMore()
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -162,7 +201,7 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
                         singleLine = true,
                         trailingIcon = {
                             IconButton(onClick = {
-                                viewModel.search(searchQuery)
+                                viewModel.search(searchQuery, reset = true)
                                 showFavorites = false
                             }) {
                                 Icon(Icons.Default.Search, contentDescription = "Search")
@@ -204,7 +243,8 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
         ) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(150.dp),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                state = gridState
             ) {
                 if (showFavorites) {
                     items(favorites) { favPhoto ->
