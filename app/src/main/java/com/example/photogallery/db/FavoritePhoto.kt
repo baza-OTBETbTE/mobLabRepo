@@ -26,6 +26,9 @@ interface FavoritePhotoDao {
 
     @Query("DELETE FROM favorites")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM favorites WHERE id = :photoId")
+    suspend fun deleteById(photoId: String)
 }
 
 @Database(entities = [FavoritePhoto::class], version = 1, exportSchema = false)

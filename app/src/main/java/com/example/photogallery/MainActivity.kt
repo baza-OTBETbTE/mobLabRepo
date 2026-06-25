@@ -10,11 +10,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
@@ -22,6 +25,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -101,9 +106,13 @@ class PhotoGalleryViewModel (application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun saveToFavorites(photo: UnsplashPhoto) {
+    fun toggleFavorite(photoId: String, url: String, isFavorite: Boolean) {
         viewModelScope.launch {
-            dao.insert(FavoritePhoto(id = photo.id, url = photo.urls.small))
+            if (isFavorite) {
+                dao.deleteById(photoId)
+            } else {
+                dao.insert(FavoritePhoto(id = photoId, url = url))
+            }
         }
     }
 
@@ -120,16 +129,17 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
     val photos by viewModel.photos.collectAsState()
     val favorites by viewModel.favoritePhotos.collectAsState(initial = emptyList())
 
+    val favoriteIds = remember(favorites) { favorites.map { it.id }.toSet() }
+
     var searchQuery by remember { mutableStateOf("") }
     var expandedMenu by remember { mutableStateOf(false) }
-    var showFavorites by remember { mutableStateOf(false) } // Переключатель режимов
+    var showFavorites by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("PhotoGallery") },
                 actions = {
-                    // Поле поиска
                     TextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
@@ -139,7 +149,7 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
                         trailingIcon = {
                             IconButton(onClick = {
                                 viewModel.search(searchQuery)
-                                showFavorites = false // При поиске возвращаемся в режим сети
+                                showFavorites = false
                             }) {
                                 Icon(Icons.Default.Search, contentDescription = "Search")
                             }
@@ -184,24 +194,64 @@ fun PhotoGalleryScreen(viewModel: PhotoGalleryViewModel = viewModel()) {
             ) {
                 if (showFavorites) {
                     items(favorites) { favPhoto ->
-                        AsyncImage(
-                            model = favPhoto.url,
-                            contentDescription = "Favorite Photo",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.padding(4.dp).aspectRatio(1f)
-                        )
-                    }
-                } else {
-                    items(photos) { photo ->
-                        AsyncImage(
-                            model = photo.urls.small,
-                            contentDescription = "Net Photo",
-                            contentScale = ContentScale.Crop,
+                        Box(
                             modifier = Modifier
                                 .padding(4.dp)
                                 .aspectRatio(1f)
-                                .clickable { viewModel.saveToFavorites(photo) }
-                        )
+                                .clickable {
+                                    viewModel.toggleFavorite(favPhoto.id, favPhoto.url, true)
+                                }
+                        ) {
+                            AsyncImage(
+                                model = favPhoto.url,
+                                contentDescription = "Favorite Photo",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = "Liked",
+                                tint = Color.Red,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .size(28.dp)
+                                    .background(Color.Black.copy(alpha = 0.3f), shape = MaterialTheme.shapes.small)
+                                    .padding(4.dp)
+                            )
+                        }
+                    }
+                } else {
+                    items(photos) { photo ->
+                        val isLiked = favoriteIds.contains(photo.id)
+
+                        Box(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .aspectRatio(1f)
+                                .clickable {
+                                    viewModel.toggleFavorite(photo.id, photo.urls.small, isLiked)
+                                }
+                        ) {
+                            AsyncImage(
+                                model = photo.urls.small,
+                                contentDescription = "Net Photo",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                            Icon(
+                                imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Like Status",
+                                tint = if (isLiked) Color.Red else Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .size(28.dp)
+                                    .background(Color.Black.copy(alpha = 0.3f), shape = MaterialTheme.shapes.small)
+                                    .padding(4.dp)
+                            )
+                        }
                     }
                 }
             }
